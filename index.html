@@ -292,8 +292,6 @@ footer{padding:36px var(--g) 50px;border-top:1px solid var(--hair);display:flex;
     <div class="btns">
       <button class="btn b-mail" type="button" id="send" data-ar="إرسال الطلب">Send request</button>
       <button class="btn b-wa" type="button" id="wa" data-ar="أرسل عبر واتساب">Send via WhatsApp</button>
-      <button class="btn b-mail" type="button" id="em" data-ar="أرسل عبر الإيميل">Send via Email</button>
-      <a class="btn b-call" id="call" href="tel:+201554232400" data-ar="اتصل بنا">Call us</a>
     </div><p id="msg" role="status"></p>
   </div>
 </div></section>
@@ -369,16 +367,17 @@ document.getElementById('send').onclick=async function(){
   const d=data(),s=document.getElementById('msg'),b=this;
   if(!valid(d))return;
   b.disabled=true;s.textContent=lang==='ar'?'جاري الإرسال...':'Sending...';
+  const post=async o=>{const r=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(o)});let j={};try{j=await r.json()}catch(_){}return j};
+  const base={access_key:KEY,botcheck:document.getElementById('f-bot').checked,name:d.n,...(d.m?{email:d.m}:{}),message:`Phone: ${d.t}\nBusiness: ${d.k||'-'}\nDetails: ${d.x||'-'}`};
   try{
-    const r=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({access_key:KEY,botcheck:document.getElementById('f-bot').checked,subject:'New website request — The Lion',name:d.n,phone:d.t,...(d.m?{email:d.m}:{}),business:d.k,message:d.x||'-'})});
-    const j=await r.json();
+    let j=await post({...base,subject:`New request — ${d.n} — ${d.t}`,from_name:'The Lion Website',phone:d.t,business:d.k||'-'});
+    if(!j.success)j=await post({...base,subject:'New website request — The Lion',mobile:d.t,business:d.k||'-'});
     if(j.success){s.textContent=lang==='ar'?'تم استلام طلبك! سنتواصل معك قريبًا.':'Request received! We will contact you soon.';['f-name','f-tel','f-mail','f-msg'].forEach(i=>document.getElementById(i).value='')}
-    else throw 0;
-  }catch(e){s.textContent=lang==='ar'?'تعذّر الإرسال. جرّب واتساب أو الاتصال.':'Could not send. Please try WhatsApp or call us.'}
+    else throw (j.message||'no response');
+  }catch(e){s.textContent=(lang==='ar'?'تعذّر الإرسال. جرّب التواصل عبر واتساب.':'Could not send. Please contact us on WhatsApp.')+' ['+(typeof e==='string'?e:(e&&e.message)||'network error')+']'}
   b.disabled=false;
 };
 document.getElementById('wa').onclick=()=>{const d=data();if(ok(d))open(`https://wa.me/${PHONE}?text=${encodeURIComponent(body(d))}`,'_blank')};
-document.getElementById('em').onclick=()=>{const d=data();if(ok(d))location.href=`mailto:${MAIL}?subject=${encodeURIComponent('New website request')}&body=${encodeURIComponent(body(d))}`};
 /* lion parallax */
 (function(){const L=document.querySelector('.lion');if(L&&!still)addEventListener('pointermove',e=>{const x=e.clientX/innerWidth-.5,y=e.clientY/innerHeight-.5;L.style.setProperty('--px',(x*-90)+'px');L.style.setProperty('--py',(y*-26)+'px');L.style.setProperty('--ry',(x*14)+'deg')})})();
 /* in-page links: scroll without navigating */
